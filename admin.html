@@ -6,4 +6,141 @@
   <title>Admin — Skillarium</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    .admin
+    .admin-login{display:flex;align-items:center;justify-content:center;min-height:70vh;}
+    .login-card{background:var(--surface);padding:32px;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,0.06);max-width:400px;width:100%;text-align:center;}
+    .login-card h2{margin-bottom:8px;}
+    .login-card p{color:var(--text-secondary);margin-bottom:20px;}
+    .login-card input{width:100%;padding:12px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:12px;font-size:14px;}
+    .login-card .btn{width:100%;}
+    .dashboard{display:none;}
+    .filter-bar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:20px;}
+    .filter-bar select,.filter-bar input{padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;}
+    .app-table{width:100%;border-collapse:collapse;}
+    .app-table th,.app-table td{padding:12px;text-align:left;border-bottom:1px solid #e5e7eb;}
+    .app-table th{background:var(--soft-surface);font-weight:600;}
+    .badge{padding:4px 8px;border-radius:4px;font-size:12px;font-weight:500;}
+    .badge-pending{background:#fef3c7;color:#92400e;}
+    .badge-accepted{background:#d1fae5;color:#065f46;}
+    .badge-rejected{background:#fee2e2;color:#991b1b;}
+    .review-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;}
+    .review-modal.active{display:flex;}
+    .review-card{background:var(--surface);padding:32px;border-radius:12px;max-width:500px;width:100%;}
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <div class="brand">
+        <a href="index.html" class="brand-title">SKILLARIUM</a>
+        <span class="brand-sub">Admin</span>
+      </div>
+      <nav class="nav">
+        <a href="index.html">Home</a>
+        <a href="apply.html">Apply</a>
+        <a href="portal.html">Portal</a>
+        <a href="admin.html" class="active">Admin</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="admin-login" id="loginBox">
+      <div class="login-card">
+        <h2>Admin Login</h2>
+        <p>Enter your password to access the admin dashboard.</p>
+        <input type="password" id="adminPassword" placeholder="Password">
+        <button class="btn btn-primary" onclick="doLogin()">Login</button>
+        <p id="loginError" style="color:#ef4444;margin-top:12px;font-size:13px;display:none;">Invalid password</p>
+      </div>
+    </div>
+
+    <div class="dashboard" id="dashboard">
+      <h1>Applications</h1>
+      <div class="filter-bar">
+        <select id="filterType"><option value="all">All</option><option value="teacher">Teachers</option><option value="student">Students</option></select>
+        <select id="sortBy"><option value="newest">Newest First</option><option value="oldest">Oldest First</option><option value="name">Name A-Z</option></select>
+        <input type="text" id="searchInput" placeholder="Search by name or ID...">
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <table class="app-table">
+          <thead><tr><th>ID</th><th>Name</th><th>Type</th><th>Email</th><th>Status</th><th>Applied</th><th>Action</th></tr></thead>
+          <tbody id="appTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <div class="review-modal" id="reviewModal">
+    <div class="review-card">
+      <h2>Review Application</h2>
+      <div id="reviewDetails" style="margin:16px 0;"></div>
+      <div style="display:flex;gap:12px;justify-content:flex-end;">
+        <button class="btn btn-secondary" onclick="closeReview()">Close</button>
+        <button class="btn btn-primary" style="background:#ef4444;color:#fff;" onclick="setStatus('rejected')">Reject</button>
+        <button class="btn btn-primary" style="background:#22c55e;color:#fff;" onclick="setStatus('accepted')">Accept</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    const ADMIN_PASSWORD='admin123';
+    function doLogin(){
+      if(document.getElementById('adminPassword').value===ADMIN_PASSWORD){
+        document.getElementById('loginBox').style.display='none';
+        document.getElementById('dashboard').style.display='block';
+        renderTable();
+      } else {
+        document.getElementById('loginError').style.display='block';
+      }
+    }
+    let currentApp=null;
+    function renderTable(){
+      let apps=getApps();
+      const type=document.getElementById('filterType').value;
+      const sort=document.getElementById('sortBy').value;
+      const q=document.getElementById('searchInput').value.toLowerCase();
+      if(type!=='all') apps=apps.filter(a=>a.type===type);
+      if(q) apps=apps.filter(a=>(a.name+' '+a.id).toLowerCase().includes(q));
+      if(sort==='newest') apps.sort((a,b)=>new Date(b.date)-new Date(a.date));
+      if(sort==='oldest') apps.sort((a,b)=>new Date(a.date)-new Date(b.date));
+      if(sort==='name') apps.sort((a,b)=>a.name.localeCompare(b.name));
+      const tbody=document.getElementById('appTable');
+      tbody.innerHTML=apps.map(a=>{
+        const st=a.status||'pending';
+        const cls='badge-'+st;
+        return `<tr><td>${a.id}</td><td>${a.name}</td><td>${a.type}</td><td>${a.email}</td><td><span class="badge ${cls}">${st}</span></td><td>${a.date.slice(0,10)}</td><td><button class="btn btn-primary" style="padding:6px 12px;font-size:12px;" onclick="openReview('${a.id}')">Review</button></td></tr>`;
+      }).join('')||'<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-secondary);">No applications found.</td></tr>';
+    }
+    function openReview(id){
+      const apps=getApps();
+      const app=apps.find(a=>a.id===id);
+      if(!app) return;
+      currentApp=app;
+      const st=app.status||'pending';
+      const color=st==='accepted'?'#22c55e':st==='rejected'?'#ef4444':'#f59e0b';
+      document.getElementById('reviewDetails').innerHTML=`<p><strong>Name:</strong> ${app.name}</p><p><strong>Email:</strong> ${app.email}</p><p><strong>Type:</strong> ${app.type}</p><p><strong>Status:</strong> <span style="color:${color};font-weight:600;">${st.toUpperCase()}</span></p><p><strong>Date:</strong> ${app.date.slice(0,10)}</p><p><strong>Message:</strong> ${app.message||'N/A'}</p>`;
+      document.getElementById('reviewModal').classList.add('active');
+    }
+    function closeReview(){
+      document.getElementById('reviewModal').classList.remove('active');
+      currentApp=null;
+    }
+    function setStatus(status){
+      if(!currentApp) return;
+      let apps=getApps();
+      const idx=apps.findIndex(a=>a.id===currentApp.id);
+      if(idx>-1){
+        apps[idx].status=status;
+        saveApps(apps);
+        showToast('Application '+status+'!','success');
+        renderTable();
+        closeReview();
+      }
+    }
+    document.getElementById('filterType').addEventListener('change',renderTable);
+    document.getElementById('sortBy').addEventListener('change',renderTable);
+    document.getElementById('searchInput').addEventListener('input',renderTable);
+  </script>
+</body>
+</html>
