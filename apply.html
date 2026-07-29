@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apply — Skillarium</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <div class="brand">
+        <a href="index.html" class="brand-title">SKILLARIUM</a>
+        <span class="brand-sub">Academy of Professional Studies</span>
+      </div>
+      <nav class="nav">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="academics.html">Academics</a>
+        <a href="news.html">News</a>
+        <a href="events.html">Events</a>
+        <a href="students.html">Students</a>
+        <a href="admissions.html">Admissions</a>
+        <a href="contact.html">Contact</a>
+        <a href="apply.html" class="active" style="background:var(--primary);color:#fff;font-weight:500;">Apply</a>
+        <a href="portal.html">Portal</a>
+      </nav>
+      <div class="socials">
+        <a href="https://www.facebook.com/profile.php?id=61566776115788" target="_blank">f</a>
+        <a href="https://x.com/Skillarium_" target="_blank">t</a>
+        <a href="https://www.instagram.com/skillarium_academy/" target="_blank">i</a>
+        <a href="https://www.linkedin.com/company/skillarium-school-of-advanced-studies/" target="_blank">in</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+    <h1>Apply to Skillarium</h1>
+    <p class="section-subtitle" style="margin-bottom:24px;">Fill out the form below to submit your application.</p>
+
+    <div class="card" style="max-width:700px; margin:0 auto;">
+      <div class="form-group">
+        <label>Application Type</label>
+        <select id="appType">
+          <option value="student">Student</option>
+          <option value="teacher">Teacher</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="appName" placeholder="Your full name" required>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="appEmail" placeholder="your@email.com" required>
+      </div>
+      <div class="form-group">
+        <label>Phone</label>
+        <input type="tel" id="appPhone" placeholder="+91 98765 43210">
+      </div>
+      <div class="form-group" id="studentFields">
+        <label>Course Interest</label>
+        <select id="appCourse">
+          <option>Programming & Computer Science</option>
+          <option>Science & Engineering</option>
+          <option>Adobe Creative Suite</option>
+          <option>Arts & Humanities</option>
+          <option>Management Studies</option>
+        </select>
+      </div>
+      <div class="form-group" id="teacherFields" style="display:none;">
+        <label>Subject Expertise</label>
+        <input type="text" id="appSubject" placeholder="e.g., Python, Design, Mathematics">
+      </div>
+      <div class="form-group">
+        <label>Resume / CV</label>
+        <input type="file" id="appResume" accept=".pdf,.doc,.docx">
+      </div>
+      <div class="form-group">
+        <label>Cover Letter / Message</label>
+        <textarea id="appMessage" rows="4" placeholder="Tell us about yourself..."></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="submitApplication()" style="width:100%;">Submit Application</button>
+      <p id="appResult" style="margin-top:12px;text-align:center;"></p>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    document.getElementById('appType').addEventListener('change', function(){
+      const isStudent = this.value === 'student';
+      document.getElementById('studentFields').style.display = isStudent ? 'block' : 'none';
+      document.getElementById('teacherFields').style.display = isStudent ? 'none' : 'block';
+    });
+    function submitApplication(){
+      const type = document.getElementById('appType').value;
+      const name = document.getElementById('appName').value.trim();
+      const email = document.getElementById('appEmail').value.trim();
+      if(!name || !email){
+        showToast('Please fill in all required fields.', 'error');
+        return;
+      }
+      const apps = getApps();
+      const newApp = {
+        id: generateId(),
+        name: name,
+        email: email,
+        phone: document.getElementById('appPhone').value,
+        type: type,
+        course: type === 'student' ? document.getElementById('appCourse').value : null,
+        subject: type === 'teacher' ? document.getElementById('appSubject').value : null,
+        message: document.getElementById('appMessage').value,
+        date: new Date().toISOString(),
+        status: 'pending'
+      };
+      apps.push(newApp);
+      saveApps(apps);
+      document.getElementById('appResult').innerHTML = '<span style="color:#22c55e;font-weight:500;">Application submitted! Your ID: ' + newApp.id + '</span>';
+      showToast('Application submitted successfully!');
+    }
+  </script>
+</body>
+</html>
