@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal — Skillarium</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <div class="brand">
+        <a href="index.html" class="brand-title">SKILLARIUM</a>
+        <span class="brand-sub">Application Portal</span>
+      </div>
+      <nav class="nav">
+        <a href="index.html">Home</a>
+        <a href="apply.html">Apply</a>
+        <a href="portal.html" class="active">Portal</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main">
+    <h1>Check Your Application Status</h1>
+    <p class="section-subtitle" style="margin-bottom:24px;">Enter your Application ID or email to view your status.</p>
+
+    <div class="card" style="max-width:600px; margin:0 auto;">
+      <div style="display:flex; gap:12px; margin-bottom:16px;">
+        <input type="text" id="queryInput" placeholder="Application ID or Email" style="flex:1;">
+        <button class="btn btn-primary" onclick="checkStatus()">Check Status</button>
+      </div>
+      <div id="result"></div>
+    </div>
+  </main>
+
+  <script>
+    function getApps(){
+      return JSON.parse(localStorage.getItem('applications')||'[]');
+    }
+    function checkStatus(){
+      const q=document.getElementById('queryInput').value.trim().toLowerCase();
+      const apps=getApps();
+      const app=apps.find(a=>a.id.toLowerCase()===q||a.email.toLowerCase()===q);
+      const r=document.getElementById('result');
+      if(!app){
+        r.innerHTML='<p style="color:#ef4444;">No application found. Please check your ID or email.</p>';
+        return;
+      }
+      const st=app.status||'pending';
+      const color=st==='accepted'?'#22c55e':st==='rejected'?'#ef4444':'#f59e0b';
+      r.innerHTML=`<div style="border:1px solid #e5e7eb;border-radius:8px;padding:16px;">
+        <h3 style="margin-bottom:8px;">${app.name}</h3>
+        <p><strong>ID:</strong> ${app.id}</p>
+        <p><strong>Type:</strong> ${app.type}</p>
+        <p><strong>Email:</strong> ${app.email}</p>
+        <p><strong>Status:</strong> <span style="color:${color};font-weight:600;">${st.toUpperCase()}</span></p>
+        <p><strong>Submitted:</strong> ${app.date}</p>
+        ${app.message?'<p><strong>Message:</strong> '+app.message+'</p>':''}
+      </div>`;
+    }
+  </script>
+</body>
+</html>
